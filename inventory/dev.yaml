@@ -1,0 +1,10 @@
+---
+dev:
+  children:
+    monit:
+
+monit:
+  hosts:
+    appbitbucketdev.example.com:
+      ansible_python_interpreter: /usr/bin/python3
+      app_var: "bitbucket"

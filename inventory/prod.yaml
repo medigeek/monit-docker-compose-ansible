@@ -1,0 +1,19 @@
+---
+prod:
+  children:
+    monit:
+
+monit:
+  hosts:
+    appbitbucket.example.com:
+      ansible_python_interpreter: /usr/bin/python3.6
+      app_var: "bitbucket"
+    appbamboo.example.com:
+      ansible_python_interpreter: /usr/bin/python3.6
+      app_var: "bamboo"
+    appconfluence.example.com:
+      ansible_python_interpreter: /usr/bin/python3.6
+      app_var: "confluence"
+    appjira.example.com:
+      ansible_python_interpreter: /usr/bin/python3.6
+      app_var: "jira"

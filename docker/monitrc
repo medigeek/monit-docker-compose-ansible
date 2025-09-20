@@ -1,0 +1,22 @@
+#set daemon 60
+set daemon 60
+set logfile syslog
+#set httpd port 2812 and
+#    use address localhost
+#    allow localhost
+
+check system rootcpu
+    if cpu usage > 80% for 2 cycles then exec /notify.sh
+
+check system rootmem
+    if memory usage > 85% for 2 cycles then exec /notify.sh
+
+check filesystem hostrootfs with path /host
+    if space usage > 80% for 2 cycles then exec /notify.sh
+
+check filesystem hostvarfs with path /host/var
+    if space usage > 80% for 2 cycles then exec /notify.sh
+
+check program backup_check with path "/check_backup.sh"
+    if status != 0 then exec /notify.sh
+    every "0 7 * * *"

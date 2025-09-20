@@ -1,0 +1,16 @@
+---
+- name: Restart monit
+  hosts: monit
+  gather_facts: false
+  tasks:
+
+    - name: docker-compose up -d --force-recreate
+      command: "docker-compose --progress plain -f {{ compose_dir }}/docker-compose.yaml up -d --force-recreate"
+      register: dockerup_result
+      ignore_errors: true
+      changed_when: dockerup_result.rc == 0
+
+    - name: Echo docker-compose up output
+      debug:
+        var: dockerup_result
+      check_mode: false

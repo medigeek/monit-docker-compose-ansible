@@ -1,0 +1,36 @@
+services:
+  monit:
+    image: alpine:latest
+    container_name: monit
+    restart: unless-stopped
+    volumes:
+      - ./monitrc:/monitrc:ro
+      - /:/host:ro
+#      - /var:/hostvar:ro
+      - ./check_backup.sh:/check_backup.sh
+      - ./notify.sh:/notify.sh
+    environment:
+      RUNDECK_WEBHOOK_URL_FILE: /run/secrets/rundeck_webhook_url
+      MONIT_DESCRIPTION: "started monitoring"
+      APPNAME: "__HOSTNAME__"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+        compress: "true"
+    command: >
+      /bin/sh -c
+      "apk add --timeout 10 --wait 10 monit curl bash coreutils &&
+      cp -f /monitrc /etc/monitrc &&
+      chown root:users /etc/monitrc &&
+      chmod 600 /etc/monitrc &&
+      chmod ug+rwx /check_backup.sh /notify.sh &&
+      monit -Ic /etc/monitrc"
+# You can add ./notify.sh before monit to notify upon start of monitoring
+    secrets:
+      - rundeck_webhook_url
+
+secrets:
+  rundeck_webhook_url:
+    file: ./secrets/rundeck_webhook_url

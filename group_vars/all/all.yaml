@@ -1,0 +1,5 @@
+---
+files_group: "users"
+compose_name: "monit"
+compose_dir: "/opt/docker-services/{{ compose_name }}"
+ansible_become: true

@@ -1,0 +1,6 @@
+/logs/
+/.ansible/vault-pw
+/.vscode/settings.json
+.vscode/settings.json
+ansible-navigator.log
+README.md.bak

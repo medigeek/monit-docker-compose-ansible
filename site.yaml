@@ -1,0 +1,116 @@
+---
+- name: Playbook for monit
+  hosts: monit
+  gather_facts: false
+  tasks:
+
+    - name: Get current username
+      command: whoami
+      register: current_user
+      check_mode: false
+      changed_when: current_user.rc == 0
+
+    - name: Echo current username
+      debug:
+        msg: "Current username is {{ current_user.stdout }}"
+      check_mode: false
+
+    - name: docker-compose down
+      command: "docker-compose --progress plain -f {{ compose_dir }}/docker-compose.yaml down"
+      register: dockerdown_result
+      ignore_errors: true
+      changed_when: dockerdown_result.rc == 0
+
+    - name: Echo docker-compose down output
+      debug:
+        var: dockerdown_result
+      check_mode: false
+
+    - name: Create a directory to copy the docker-compose.yaml file to if it does not exist
+      file:
+        path: "{{ compose_dir }}"
+        state: directory
+        mode: '2770'
+      tags:
+        - copy-files
+
+#   Need shell to evaluate the env variables
+    - name: fix folder and file user owner and group
+      shell: "docker run -i --rm -e SUPPORT_USER_UID=$UID -v {{ compose_dir }}:/opt/sys alpine:latest sh -c 'echo UID: $SUPPORT_USER_UID; chown -R $SUPPORT_USER_UID:users /opt/sys'"
+      register: fixowner_result
+      ignore_errors: true
+      changed_when: fixowner_result.rc == 0
+
+    - name: Copy required container and compose files to the remote host
+      copy:
+        src: docker/
+        dest: "{{ compose_dir }}/"
+        mode: '0664'
+      tags:
+        - copy-files
+
+    - name: Find files to replace Windows CRLF line endings in
+      find:
+        paths: "{{ compose_dir }}/"
+        recurse: true
+        patterns: "*.sh"
+      register: files_to_replace_crlf
+      tags:
+        - crlf
+
+    - name: Replace Windows CRLF line endings
+      replace:
+        path: "{{ item.path }}"
+        regexp: "\r"
+      with_items:
+        - "{{ files_to_replace_crlf.files }}"
+      tags:
+        - crlf
+
+    - name: Changing permissions of subfolders, adding "g+w" - only when stage=dev
+      file:
+        dest: "{{ compose_dir }}/{{ item }}"
+        mode: 'g+w'
+      with_items:
+        - 'secrets'
+      tags:
+        - copy-files
+
+    - name: Changing permissions of scripts, adding "ug+x"
+      file:
+        dest: "{{ compose_dir }}/{{ item }}"
+        mode: 'ug+x'
+      with_items:
+        - 'notify.sh'
+        - 'check_backup.sh'
+      tags:
+        - copy-files
+
+    - name: Set correct APPNAME for monit client in docker-compose.yaml
+      replace:
+        path: "{{ compose_dir }}/docker-compose.yaml"
+        regexp: '^(\s+APPNAME\:)\s*(.*)$'
+        replace: '\1 "{{ inventory_hostname }}"'
+      tags:
+        - copy-files
+        - config
+
+    - name: Set correct APP for monit client in check_backup.sh
+      replace:
+        path: "{{ compose_dir }}/check_backup.sh"
+        regexp: '^(APP\=)(.*)$'
+        replace: '\1"{{ app_var }}"'
+      tags:
+        - copy-files
+        - config
+
+    - name: docker up
+      command: "docker-compose --progress plain -f {{ compose_dir }}/docker-compose.yaml up -d --force-recreate"
+      register: dockerup_result
+      ignore_errors: true
+      changed_when: dockerup_result.rc == 0
+
+    - name: Echo docker-compose up output
+      debug:
+        var: dockerup_result
+      check_mode: false
