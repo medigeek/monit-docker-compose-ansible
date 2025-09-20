@@ -22,6 +22,8 @@ This docker-compose project contains the following services:
 
 For semi-automated rollout, [Ansible](https://docs.ansible.com/ansible_community.html) is used.
 
+For demonstration purposes we used a fictive atlassian stack of apps to demonstrate the usage of the monit as a monitoring app and its deployment. 
+
 ### What is Monit
 
 Monit is a free, open-source utility designed for managing and monitoring processes, programs, files, directories, and filesystems on Unix and Linux systems. It performs automatic maintenance and repair, executing predefined actions in response to specific conditions, such as restarting a process if it fails or stopping it if it consumes too many resources. Monit can also monitor network services and protocols, providing alerts and logging through a web interface or command line123.
